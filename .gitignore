@@ -24,3 +24,7 @@
 /dist/
 /nbdist/
 /.nb-gradle/
+
+### spring modules ###
+eureka-server/build
+eureka-client/build
