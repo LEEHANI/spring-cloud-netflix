@@ -1,6 +1,7 @@
 buildscript {
     ext {
-        springBootVersion = '2.6.3'
+//        springBootVersion = '2.6.3'
+        springBootVersion = '2.3.9.RELEASE' // zuul 학습을 위해 다운그레이드
     }
     repositories {
         mavenCentral()
@@ -24,6 +25,11 @@ subprojects {
         compileOnly
     }
 
+    ext {
+//    set('springCloudVersion', "2021.0.0")
+        set('springCloudVersion', "Hoxton.SR1")
+    }
+
     apply plugin: 'java'
     apply plugin: 'org.springframework.boot'
     apply plugin: 'io.spring.dependency-management'
@@ -36,6 +42,12 @@ subprojects {
         testImplementation 'org.springframework.boot:spring-boot-starter-test'
         testImplementation('org.springframework.boot:spring-boot-starter-test') {
             exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
+        }
+    }
+
+    dependencyManagement {
+        imports {
+            mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
         }
     }
 }

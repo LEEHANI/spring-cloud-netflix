@@ -28,3 +28,4 @@
 ### spring modules ###
 eureka-server/build
 eureka-client/build
+member/build
