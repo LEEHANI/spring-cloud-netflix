@@ -1,8 +1,17 @@
 server:
-  port: 8081 # 0 random port
+  port: 8000
 spring:
   application:
-    name: member
+    name: zuul-server
+
+zuul:
+  routes:
+    member:
+      path: /member/**
+      url: http://localhost:8081
+    eureka-client:
+      path: /eureka-client/**
+      url: http://localhost:8888
 
 eureka:
   instance:

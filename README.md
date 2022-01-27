@@ -18,7 +18,80 @@
 - prefer-ip-address는 호스트 이름 대신 ip 주소로 통신 
 
 
+# Zuul
+[api_gateway](/images/api_gateway.png)
+- Zuul은 `API Gateway`. 
+- `클라이언트가 요청을 서버에게 직접하는게 아니라 zuul을 통해 요청함`. 일종의 `프록시`역할
+- 클라이언트가 zuul대신 서버를 직접 호출하면 서버의 수정사항이 발생했을 때, 수정해야하는 단점이 있음.  
+- `서비스의 내부 동작은 숨기고 클라이언트의 요청을 적절하게 응답해줌.` 
+- 게이트웨이 서비스를 사용하면 인증 및 권한, 부하 분산, 로깅(ELK 대신), IP 허용 목록 추가 등  
+- spring boot 2.4.x 부터 지원하지 않음. zuul 대신 Spring Cloud Gateway를 권고.
+- zuul 사용을 위해 spring downgrade 
+  - spring boot 2.6.3 -> 2.3.9.RELEASE. 
+  - springCloudVersion 2021.0.0 -> Hoxton.SR1
+
+## zuul 적용 
+- gradle dependency. 'implementation('org.springframework.cloud:spring-cloud-starter-netflix-zuul')'
+- ZuulApplication에 `@EnableZuulProxy` 어노테이션 추가 
+- application.yml에 라우팅할 서비스 추가 
+  + ```
+  zuul:
+    routes:
+      member:
+        path: /member/**
+        url: http://localhost:8081
+      eureka-client:
+        path: /eureka-client/**
+        url: http://localhost:8888
+    ```
+  
+## zuul filter
+[zuul_filter](/images/zuul_filter.png)
+- 상황에 맞는 필터를 골라 filterType에 지정해주면 된다. 
+- ```
+  @Override
+  public String filterType() {
+    return "pre";
+  }
+  ```
+- filterType 종류 
+  - pre filter, post filter
+    + 전처리, 후처리 필터 
+  - custom filter
+  - routing filter
+    + 조건에 따라 특정 서버로 전달
+  - error filter
+- ```
+    @Override
+    public Object run() throws ZuulException {
+        log.info("========================== print zuul logs start ");
+
+        RequestContext ctx = RequestContext.getCurrentContext();
+        HttpServletRequest request = ctx.getRequest();
+
+        log.info("========================== print zuul logs: " + request.getRequestURI());
+        return null;
+    }
+  ```
+- run() 메서드에서 수행할 로직을 추가하면 된다.
+- https://netflixtechblog.com/announcing-zuul-edge-service-in-the-cloud-ab3af5be08ee
+
+## 테스트 
+[direct_api_call](/images/direct_api_call.png)
+- 기존에 MemberController를 호출하기 위해 `localhost:8081/welcome`로 호출했었음. 
+
+[zuul_proxy_call](/images/zuul_proxy_call.png)
+- zuul을 통해서 호출하려면 `localhost:8000/member/welcome`로 호출하면 된다. 
+- 즉, member로 들어오는 url은 member 서비스로 서빙해줌. 
+- 호출시 마다 filter 로그도 찍힘
+  + ```
+    2022-01-24 22:53:35.302  INFO 81914 --- [nio-8000-exec-7] com.example.filter.ZuulLoggingFilter     : ========================== print zuul logs start 
+    2022-01-24 22:53:35.303  INFO 81914 --- [nio-8000-exec-7] com.example.filter.ZuulLoggingFilter     : ========================== print zuul logs: /member/welcome
+    ```
+
 ## spring-cloud dependency 추가시 주의 사항 
 [spring-cloud-version](/images/spring_cloud_version.png)
 - 스프링 부트에 맞는 spring-cloud 버전을 선택해야함. 
 - https://spring.io/projects/spring-cloud
+
+
