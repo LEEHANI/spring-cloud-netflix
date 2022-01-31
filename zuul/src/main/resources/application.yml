@@ -7,11 +7,14 @@ spring:
 zuul:
   routes:
     member:
-      path: /member/**
+      path: /member-service/**
       url: http://localhost:8081
     eureka-client:
       path: /eureka-client/**
       url: http://localhost:8888
+    order:
+      path: /order-service/**
+      url: http://localhost:8082
 
 eureka:
   instance:

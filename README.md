@@ -24,8 +24,11 @@
 - `클라이언트가 요청을 서버에게 직접하는게 아니라 zuul을 통해 요청함`. 일종의 `프록시`역할
 - 클라이언트가 zuul대신 서버를 직접 호출하면 서버의 수정사항이 발생했을 때, 수정해야하는 단점이 있음.  
 - `서비스의 내부 동작은 숨기고 클라이언트의 요청을 적절하게 응답해줌.` 
-- 게이트웨이 서비스를 사용하면 인증 및 권한, 부하 분산, 로깅(ELK 대신), IP 허용 목록 추가 등  
-- spring boot 2.4.x 부터 지원하지 않음. zuul 대신 Spring Cloud Gateway를 권고.
+- 게이트웨이 서비스를 사용하면 인증 및 권한, 부하 분산, 로깅(ELK 대신), IP 허용 목록 추가 등
+- `zuul`은 `로드 밸런서`로 `netflix-ribbon`을 사용한다. `ribbon`은 내부적으로 `eureka 서버`를 통해 마이크로 서비스 정보를 얻어온다. 
+- `spring boot 2.4.x` 부터 지원하지 않음. `zuul` 대신 `Spring Cloud Gateway`를 권고.
+- `zuul 1`은 `동기` 방식을 지원, `zuul 2`는 `비동기` 방식을 지원함.
+- `하지만 zuul 2 방식은 spring에서 채택되지 못하고 spring은 spring-cloud-gateway를 만들어서 사용`
 - zuul 사용을 위해 spring downgrade 
   - spring boot 2.6.3 -> 2.3.9.RELEASE. 
   - springCloudVersion 2021.0.0 -> Hoxton.SR1

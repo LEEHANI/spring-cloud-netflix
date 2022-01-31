@@ -30,3 +30,4 @@ eureka-server/build
 eureka-client/build
 member/build
 zuul/build
+order/build

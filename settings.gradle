@@ -3,4 +3,5 @@ include 'eureka-server'
 include 'eureka-client'
 include 'member'
 include 'zuul'
+include 'order'
 
