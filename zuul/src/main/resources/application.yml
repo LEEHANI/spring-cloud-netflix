@@ -8,13 +8,13 @@ zuul:
   routes:
     member:
       path: /member-service/**
-      url: http://localhost:8081
+      serviceId: member-service
     eureka-client:
       path: /eureka-client/**
       url: http://localhost:8888
     order:
       path: /order-service/**
-      url: http://localhost:8082
+      serviceId: order-service
 
 eureka:
   instance:

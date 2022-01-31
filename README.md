@@ -4,7 +4,7 @@
 - Service Discovery 역할을 수행. 전화번호부 역할
 
 ## Eureka Server
-[eureka_dashboard](/images/eureka_dashboard.png)
+![eureka_dashboard](/images/eureka_dashboard.png)
 - 유레카 서버를 구동시키면 클라이언트들의 등록 상태를 확인하는 대시보드를 제공한다.
 - 유레카 서버 이름은 `spring.application.name`에서 설정한다. 
 - 유레카 서버는 다른 서버들보다 `먼저 실행`되어야 함.
@@ -12,20 +12,19 @@
 - fetch-registry 레지스트리에 있는 정보를 가져올지 여부 
 
 ## Eureka Client 
-[eureka_add_client](/images/eureka_add_client.png)
+![eureka_add_client](/images/eureka_add_client.png)
 - 유레카 클라이언트를 등록하면 대시보드에 클라이언드 정보가 추가된다. 
 - defaultZone은 유레카 클라이언트가 접속할 주소 정보 
 - prefer-ip-address는 호스트 이름 대신 ip 주소로 통신 
 
 
 # Zuul
-[api_gateway](/images/api_gateway.png)
+![api_gateway](/images/api_gateway.png)
 - Zuul은 `API Gateway`. 
 - `클라이언트가 요청을 서버에게 직접하는게 아니라 zuul을 통해 요청함`. 일종의 `프록시`역할
 - 클라이언트가 zuul대신 서버를 직접 호출하면 서버의 수정사항이 발생했을 때, 수정해야하는 단점이 있음.  
 - `서비스의 내부 동작은 숨기고 클라이언트의 요청을 적절하게 응답해줌.` 
-- 게이트웨이 서비스를 사용하면 인증 및 권한, 부하 분산, 로깅(ELK 대신), IP 허용 목록 추가 등
-- `zuul`은 `로드 밸런서`로 `netflix-ribbon`을 사용한다. `ribbon`은 내부적으로 `eureka 서버`를 통해 마이크로 서비스 정보를 얻어온다. 
+- 게이트웨이 서비스를 사용하면 인증 및 권한, 부하 분산, 로깅(ELK 대신), IP 허용 목록 추가 등 
 - `spring boot 2.4.x` 부터 지원하지 않음. `zuul` 대신 `Spring Cloud Gateway`를 권고.
 - `zuul 1`은 `동기` 방식을 지원, `zuul 2`는 `비동기` 방식을 지원함.
 - `하지만 zuul 2 방식은 spring에서 채택되지 못하고 spring은 spring-cloud-gateway를 만들어서 사용`
@@ -34,22 +33,57 @@
   - springCloudVersion 2021.0.0 -> Hoxton.SR1
 
 ## zuul 적용 
-- gradle dependency. 'implementation('org.springframework.cloud:spring-cloud-starter-netflix-zuul')'
-- ZuulApplication에 `@EnableZuulProxy` 어노테이션 추가 
+- gradle dependency. 
+  ```
+  implementation('org.springframework.cloud:spring-cloud-starter-netflix-zuul') 
+  ```
+- ZuulApplication에 `@EnableZuulProxy` 어노테이션 추가
+  ``` 
+  @SpringBootApplication
+  @EnableEurekaClient
+  @EnableZuulProxy
+  public class ZuulApplication {
+    public static void main(String[] args) {
+      SpringApplication.run(ZuulApplication.class, args);
+    }
+  }
+  ```
 - application.yml에 라우팅할 서비스 추가 
-  + ```
+  ```
   zuul:
     routes:
       member:
-        path: /member/**
-        url: http://localhost:8081
+        path: /member-service/**
+        //url: http://localhost:8081
+        serviceId: member-service
       eureka-client:
         path: /eureka-client/**
         url: http://localhost:8888
     ```
+- `유레카`를 쓰고있다면 `url`대신 `serviceId` 속성을 사용할 수 있다. 
+
+## 클라이언트 사이드 로드밸런싱
+- `zuul`은 `클라이언트사이드 로드 밸런싱`을 제공한다. 
+- 보통 로드밸런싱은 서버 앞에 L4같은 하드웨어 장치인 스위치를 둬서 로드밸런싱을 한다.
+- zuul을 사용하게 되면 별도의 장비 없이 클라이언트쪽에서, 즉 `서버를 호출하는 클라이언트 측에서 로드밸런싱을 처리할 수 있다.`
+- `zuul`은 `로드 밸런서`로 `netflix-ribbon`을 사용한다. `ribbon`은 내부적으로 `eureka 서버`를 통해 마이크로 서비스 정보를 얻어온다.
+- RestTemplate에도 로드밸런싱을 적용할 수 있다. 
+  ``` 
+  @Bean
+  @LoadBalanced
+  public RestTemplate restTemplate() {
+        return new RestTemplate();
+  }
+  ```
+- RestTemplate에 @LoadBalanced 어노테이션을 붙이고, 호출 url을 다음과 같이 바꿀 수 있다.    
+  ```
+  //    private static final String ORDER_URL = "http://localhost:8000/order-service/%s/orders";
+  private static final String ORDER_URL = "http://order-service/%s/orders"; 
+  ```
   
+
 ## zuul filter
-[zuul_filter](/images/zuul_filter.png)
+![zuul_filter](/images/zuul_filter.png)
 - 상황에 맞는 필터를 골라 filterType에 지정해주면 된다. 
 - ```
   @Override
@@ -80,10 +114,10 @@
 - https://netflixtechblog.com/announcing-zuul-edge-service-in-the-cloud-ab3af5be08ee
 
 ## 테스트 
-[direct_api_call](/images/direct_api_call.png)
+![direct_api_call](/images/direct_api_call.png)
 - 기존에 MemberController를 호출하기 위해 `localhost:8081/welcome`로 호출했었음. 
 
-[zuul_proxy_call](/images/zuul_proxy_call.png)
+![zuul_proxy_call](/images/zuul_proxy_call.png)
 - zuul을 통해서 호출하려면 `localhost:8000/member/welcome`로 호출하면 된다. 
 - 즉, member로 들어오는 url은 member 서비스로 서빙해줌. 
 - 호출시 마다 filter 로그도 찍힘
@@ -92,8 +126,13 @@
     2022-01-24 22:53:35.303  INFO 81914 --- [nio-8000-exec-7] com.example.filter.ZuulLoggingFilter     : ========================== print zuul logs: /member/welcome
     ```
 
+## 로드밸런싱 테스트 
+![ribbon_loadbalance](/images/ribbon_loadbalance.png)
+- MemberApplication을 복제하여 포트만 변경해서 구동시켜보자. 
+- `curl -XGET http://localhost:8000/member-service/welcome` 으로 테스트해보면 라운드 로빈으로 호출되는 걸 테스트할 수 있다.  
+
 ## spring-cloud dependency 추가시 주의 사항 
-[spring-cloud-version](/images/spring_cloud_version.png)
+![spring-cloud-version](/images/spring_cloud_version.png)
 - 스프링 부트에 맞는 spring-cloud 버전을 선택해야함. 
 - https://spring.io/projects/spring-cloud
 
