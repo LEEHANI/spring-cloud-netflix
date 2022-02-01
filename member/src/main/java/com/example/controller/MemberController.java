@@ -27,9 +27,21 @@ public class MemberController {
         return "Welcome to member service";
     }
 
-    @GetMapping("/{memberId}")
+    @GetMapping("/v1/{memberId}")
     public HashMap<String, String> getMember(@PathVariable String memberId) {
         String order = orderService.getOrderByMemberId(memberId);
+
+        log.info("member getMember api. port : {} ", port);
+        HashMap<String, String> response = new HashMap<>();
+        response.put("memberId", memberId);
+        response.put("order", order);
+
+        return response;
+    }
+
+    @GetMapping("/v2/{memberId}")
+    public HashMap<String, String> getMemberUseFeign(@PathVariable String memberId) {
+        String order = orderService.getOrderByMemberIdUseFeign(memberId);
 
         log.info("member getMember api. port : {} ", port);
         HashMap<String, String> response = new HashMap<>();
