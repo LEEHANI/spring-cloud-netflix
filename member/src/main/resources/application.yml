@@ -13,6 +13,18 @@ eureka:
     service-url:
       defaultZone: http://127.0.0.1:8761/eureka
 
+hystrix:
+  command:
+    default:
+      execution:
+        isolation:
+          thread:
+            timeoutInMilliseconds: 1000 # default 1s. 지정된 시간안에 응답이 안오면 circuit 오픈과 상관없이 HystrixException이 발생되고 fallback method 호출
+      circuitBreaker:
+        requestVolumeThreshold: 4 # 10초간
+        errorThresholdPercentage: 50 # default 50%
+
+
 logging:
   level:
     com.exmaple.client: DEBUG

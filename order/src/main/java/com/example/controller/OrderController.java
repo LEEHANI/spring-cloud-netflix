@@ -18,4 +18,16 @@ public class OrderController {
 
         return order;
     }
+
+    @GetMapping("{orderId}")
+    public String getOrder(String orderId) {
+        String order = UUID.randomUUID().toString();
+
+        return order;
+    }
+
+    @GetMapping("{orderId}/error")
+    public String getOrderError(String orderId) {
+        throw new RuntimeException();
+    }
 }

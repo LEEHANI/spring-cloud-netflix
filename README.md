@@ -1,4 +1,68 @@
 
+# spring-cloud-netflix
+![netflix_microservice_architecture](/images/netflix_microservice_architecture.png)
+
+# Circuit Breaker 
+- 장애가 발생하는 서비스에 반복적으로 호출하지 않고 `차단`하는 서비스.
+- 장애가 발생하면 전체 장애로 이어지지 않기 위해 해당 기능을 다른 기능으로 대체
+- 정상 응답을 하는 동안은 circuit breaker는 `CLOSED` 상태이고, 일정 수치동안 실패하면 서킷브레이커가 `OPEN`된다.
+
+# Hystrix
+- `netflix-hystrix`가 `circuit-breaker` 역할을 해준다.  
+- `2018년`부터 더이상 개발을 진행하고 있지 않고있다.
+- hystix는 `maintenance mode`로, 넷플릭스에서 기존 프로젝트는 hystrix를 유지하고 새로운 프로젝트는 `Resilience4j`로 사용하고 있다.
+- 메서드를 `interceptor`해서 대신 실행한다.
+![hystrix-flow-chart](/images/hystrix-flow-chart.png)
+- circuit이 오픈된 상태에서는 바로 return 된다. fallback 함수를 설정해뒀다면 fallback함수 호출.
+
+## hystrix 적용 
+- gradle dependency
+ ``` 
+ implementation('org.springframework.cloud:spring-cloud-starter-netflix-hystrix')
+ ```
+- `Application`에 `@EnableCircuitBreaker` 어노테이션 추가 
+  ```
+  @SpringBootApplication
+  @EnableEurekaClient
+  @EnableCircuitBreaker
+  public class MemberApplication {
+    public static void main(String[] args) {
+      SpringApplication.run(MemberApplication.class, args);
+    }
+  }
+  ```
+- 메서드에 `@HystrixCommand` 적용 
+  ```
+    @HystrixCommand
+    public String getOrdersV2(String orderId) {
+        return restTemplate.getForObject(String.format(ORDER_URL, orderId),
+                String.class);
+    }
+
+    @HystrixCommand(fallbackMethod = "fallback")
+    public String getOrderError(String orderId) {
+        return restTemplate.getForObject(String.format(ORDER_URL + "/error", orderId),
+                String.class);
+    }   
+  ```
+- `circuit이 오픈됐거나 Exception이 발생한 경우 fallback method가 호출된다.`
+- application.yml 
+  ```
+  hystrix:
+    command:
+      default:
+        execution:
+          isolation:
+            thread:
+              timeoutInMilliseconds: 1000 # default 1s. 지정된 시간안에 응답이 안오면 circuit 오픈과 상관없이 HystrixException이 발생되고 fallback method 호출
+        circuitBreaker:
+          requestVolumeThreshold: 4 # 10초간 4개의 요청에 대해 
+          errorThresholdPercentage: 50 # default 50% 
+  ```
+- `circuit`의 기본 설정은 `10초`동안 `20개`의 호출이 발생했을 때 `50% 이상` 실패하면 오픈된다. 
+- `requestVolumeThreshold`와 `errorThresholdPercentage` 설정이 조금 헷갈렸는데, `requestVolumeThreshold`에 지정한 값이 들어와야 퍼센테이지를 구할 수 있다. 
+- 여기서는 4로 설정해뒀는데, 10초간 4개의 요청이 들어와야 확률을 측정할 수 있다. 만약, 10초 동안 3개가 들어와서 3개 실패했다고해도 circuit이 오픈되지 않는다. 
+
 # Eureka
 - `유레카 서버`는 `마이크로 서비스`가 `등록`되거나 `삭제`될 때 `자동으로 감지`하는 역할을 수행
 - `Service Discovery` 역할을 수행. `전화번호부 역할`
@@ -209,6 +273,4 @@
 ![spring-cloud-version](/images/spring_cloud_version.png)
 - `스프링 부트`에 맞는 `spring-cloud` 버전을 선택해야함. 
 - https://spring.io/projects/spring-cloud
-
-
 
