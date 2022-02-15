@@ -1,6 +1,27 @@
 
 # spring-cloud-netflix
-![netflix_microservice_architecture](/images/netflix_microservice_architecture.png)
+![netflix_microservice_architecture](/images/netflix_microservice_architecture_2.png)
+
+# 애플리케이션 
+## 기술 스택 
+- java 11
+- spring-boot 2.3.9.RELEASE
+- spring-cloud Hoxton.SR1
+- lombok 1.18.16
+
+## 구성 요소
+- `eureka-server`: 마이크로 서비스 등록 및 검색
+- `eureka-client`: eureka 테스트 마이크로 서비스 
+- `zuul`: 마이크로 서비스 부하 분산 및 서비스 라우팅 
+- `member`: 회원 마이크로 서비스. member -> order hystrix 테스트
+- `order`: 주문 마이크로 서비스
+
+## 목차
+- [Hystrix](#hystrix)
+- [Eureka](#eureka)
+- [Zuul](#zuul)
+- [OpenFeign](#openfeign)
+
 
 # Circuit Breaker 
 - 장애가 발생하는 서비스에 반복적으로 호출하지 않고 `차단`하는 서비스.
