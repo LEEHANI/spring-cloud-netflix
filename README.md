@@ -13,7 +13,7 @@
 - `eureka-server`: 마이크로 서비스 등록 및 검색
 - `eureka-client`: eureka 테스트 마이크로 서비스 
 - `zuul`: 마이크로 서비스 부하 분산 및 서비스 라우팅 
-- `member`: 회원 마이크로 서비스. member -> order hystrix 테스트
+- `member`: 회원 마이크로 서비스. member -> order `hystrix` 테스트
 - `order`: 주문 마이크로 서비스
 
 ## 목차
@@ -24,16 +24,16 @@
 
 
 # Circuit Breaker 
-- 장애가 발생하는 서비스에 반복적으로 호출하지 않고 `차단`하는 서비스.
-- 장애가 발생하면 전체 장애로 이어지지 않기 위해 해당 기능을 다른 기능으로 대체
+- `장애`가 발생하는 서비스에 반복적으로 호출하지 않고 `차단`하는 서비스.
+- 장애가 발생하면 전체 장애로 이어지지 않기 위해 해당 기능을 다른 기능으로 대체(fallback)
 - 정상 응답을 하는 동안은 circuit breaker는 `CLOSED` 상태이고, 일정 수치동안 실패하면 서킷브레이커가 `OPEN`된다.
 
 # Hystrix
 - `netflix-hystrix`가 `circuit-breaker` 역할을 해준다.  
 - `2018년`부터 더이상 개발을 진행하고 있지 않고있다.
-- hystix는 `maintenance mode`로, 넷플릭스에서 기존 프로젝트는 hystrix를 유지하고 새로운 프로젝트는 `Resilience4j`로 사용하고 있다.
-- 메서드를 `interceptor`해서 대신 실행한다.
-![hystrix-flow-chart](/images/hystrix-flow-chart.png)
+- `hystix`는 `maintenance mode`로, 넷플릭스에서 기존 프로젝트는 hystrix를 유지하고 새로운 프로젝트는 `Resilience4j`로 사용하고 있다.
+  - hystrix를 적용한 메서드를 `interceptor`해서 대신 실행한다.
+  ![hystrix-flow-chart](/images/hystrix-flow-chart.png)
 - circuit이 오픈된 상태에서는 바로 return 된다. fallback 함수를 설정해뒀다면 fallback함수 호출.
 
 ## hystrix 적용 
@@ -65,6 +65,11 @@
         return restTemplate.getForObject(String.format(ORDER_URL + "/error", orderId),
                 String.class);
     }   
+  
+    public String fallback(String orderId, Throwable t) {
+        System.out.println("t = " + t);
+        return "fallback method";
+    }
   ```
 - `circuit이 오픈됐거나 Exception이 발생한 경우 fallback method가 호출된다.`
 - application.yml 
@@ -88,13 +93,44 @@
 - `유레카 서버`는 `마이크로 서비스`가 `등록`되거나 `삭제`될 때 `자동으로 감지`하는 역할을 수행
 - `Service Discovery` 역할을 수행. `전화번호부 역할`
 
+## Eureka Server 적용 
+- gradle
+``` 
+implementation('org.springframework.cloud:spring-cloud-starter-netflix-eureka-server')
+```
+- `Application`에 `@EnableEurekaServer` 어노테이션 추가
+  ```
+  @SpringBootApplication
+  @EnableEurekaServer
+  public class EurekaServerApplication {
+    public static void main(String[] args) {
+      SpringApplication.run(EurekaServerApplication.class, args);
+    }
+  }
+  ```
+- application.yml. 유레카 서버 포트로는 `8761`을 많이 쓴다. 
+``` 
+server:
+  port: 8761
+
+spring:
+  application:
+    name: eureka-server
+
+eureka:
+  client:
+    register-with-eureka: false
+    fetch-registry: false
+```
+- eureka.client.register-with-eureka은 유레카 클라이언트로 등록할지 여부인데, 유레카 서버는 등록하지 않아도 되니 false
+- eureka.client.fetch-registry는 유레카 서버로부터 등록 정보를 가져올지 여부이다. 
+
 ## Eureka Server
 ![eureka_dashboard](/images/eureka_dashboard.png)
-- 유레카 서버를 구동시키면 클라이언트들의 등록 상태를 확인하는 대시보드를 제공한다.
-- 유레카 서버 이름은 `spring.application.name`에서 설정한다. 
+- 유레카 서버를 구동시키면 클라이언트들의 등록 상태를 확인하는 대시보드를 제공한다. http://localhost:8761/
+- 유레카 서버 이름은 `spring.application.name`에서 설정한다.
 - 유레카 서버는 다른 서버들보다 `먼저 실행`되어야 함.
-- register-with-eureka 레지스트리에 자신을 등록할지 여부 
-- fetch-registry 레지스트리에 있는 정보를 가져올지 여부 
+
 
 ## Eureka Client 
 ![eureka_add_client](/images/eureka_add_client.png)
